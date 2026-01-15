@@ -3,12 +3,14 @@ package com.meta.memo.controller;
 import com.meta.memo.domain.Memo;
 import com.meta.memo.dto.MemoRequestDto;
 import com.meta.memo.dto.MemoResponseDto;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -22,7 +24,7 @@ public class MemoController {
         Memo newMemo = new Memo(memoRequestDto);
 
         //(임시) 현재 Memo들의 촤대 id를 체크하고 마지막 id를 부여
-        Long maxId = memoList.size() > 0 ? Collections.max(memoList.keySet()) + 1: 1;
+        Long maxId = memoList.size() > 0 ? Collections.max(memoList.keySet()) + 1 : 1;
         newMemo.setId(maxId);
 
         // DB 저장
@@ -33,4 +35,11 @@ public class MemoController {
 
         return memoresponseDto;
     }
+        @GetMapping
+        public List<MemoResponseDto> getMemos() {
+            //(임시) Map -> List
+            List<MemoResponseDto> memoResponseDtos = memoList.values().stream()
+                    .map(MemoResponseDto::new).toList();
+            return memoResponseDtos;
+        }
 }
