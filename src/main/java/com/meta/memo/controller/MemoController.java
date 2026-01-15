@@ -3,6 +3,7 @@ package com.meta.memo.controller;
 import com.meta.memo.domain.Memo;
 import com.meta.memo.dto.MemoRequestDto;
 import com.meta.memo.dto.MemoResponseDto;
+import jakarta.annotation.PostConstruct;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
@@ -16,6 +17,7 @@ public class MemoController {
     //임시 데이터베이스 (내장 메모리 배열)
     private final Map<Long, Memo> memoList = new HashMap<>();
 
+    @PostMapping
     public MemoResponseDto createMemo(@RequestBody MemoRequestDto memoRequestDto) {
         // RequestDto -> Entity 변환
         Memo newMemo = new Memo(memoRequestDto);
@@ -51,5 +53,19 @@ public class MemoController {
             } else {
                 throw new IllegalArgumentException("선택한 id의 메모는 존재하지 않습니다.");
             }
+
         }
+    @DeleteMapping("/{id}")
+    public Long deleteMemo(@PathVariable Long id) {
+        //해당 id의 메모가 데이터베이스에 존재하는지 확인
+        if (memoList.containsKey(id)) {
+            //true면, 해당 메모 가져오기
+            memoList.remove(id);
+            return id;
+        } else {
+            throw new IllegalArgumentException("선택한 id의 메모는 존재하지 않습니다.");
+        }
+    }
+
+
 }
