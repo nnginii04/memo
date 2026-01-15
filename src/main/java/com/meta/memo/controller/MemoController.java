@@ -3,10 +3,7 @@ package com.meta.memo.controller;
 import com.meta.memo.domain.Memo;
 import com.meta.memo.dto.MemoRequestDto;
 import com.meta.memo.dto.MemoResponseDto;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -41,5 +38,18 @@ public class MemoController {
             List<MemoResponseDto> memoResponseDtos = memoList.values().stream()
                     .map(MemoResponseDto::new).toList();
             return memoResponseDtos;
+        }
+        @PutMapping("/{id}")
+        public Long updateMemo(@PathVariable Long id, @RequestBody MemoRequestDto memoRequestDto) {
+            //해당 id의 메모가 데이터베이스에 존재하는지 확인
+            if (memoList.containsKey(id)) {
+                //true면, 해당 메모 가져오기
+                Memo foundMemo = memoList.get(id);
+                foundMemo.update(memoRequestDto);
+
+                return foundMemo.getId();
+            } else {
+                throw new IllegalArgumentException("선택한 id의 메모는 존재하지 않습니다.");
+            }
         }
 }
