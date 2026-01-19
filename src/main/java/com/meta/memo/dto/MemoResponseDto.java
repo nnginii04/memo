@@ -15,4 +15,7 @@ public class MemoResponseDto {
         this.userName = newMemo.getUsername();
         this.contents = newMemo.getContents();
     }
+
+    public MemoResponseDto(Long id, String username, String contents) {
+    }
 }
