@@ -3,7 +3,6 @@ package com.meta.memo.controller;
 import com.meta.memo.domain.Memo;
 import com.meta.memo.dto.MemoRequestDto;
 import com.meta.memo.dto.MemoResponseDto;
-import jakarta.annotation.PostConstruct;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -14,13 +13,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Collections;
 import java.util.List;
 
 @RestController
 @RequestMapping("api/memos")
 public class MemoController {
-    //JDBC를 통한 MySQL 데이터베이스 연결
+    // JDBC를 통한 MySQL 데이터베이스 연결
     private final JdbcTemplate jdbcTemplate;
 
     public MemoController(JdbcTemplate jdbcTemplate) {
@@ -33,9 +31,9 @@ public class MemoController {
         Memo newMemo = new Memo(memoRequestDto);
 
         // DB 저장
-        KeyHolder keyHolder = new GeneratedKeyHolder(); //기본 키를 반환 받기 위한 객체
+        KeyHolder keyHolder = new GeneratedKeyHolder(); // 기본 키를 반환 받기 위한 객체
 
-        String sql = "INSERT INTO memo(username, contents) VALUES (?,?)";
+        String sql = "INSERT INTO memo(username, contents) VALUES (?, ?)";
         jdbcTemplate.update(con -> {
             PreparedStatement preparedStatement =
                     con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -44,15 +42,14 @@ public class MemoController {
             return preparedStatement;
         }, keyHolder);
 
-
-        //Entity -> ResponseDto 변환
+        // Entity -> ResponseDto 변환
         MemoResponseDto memoresponseDto = new MemoResponseDto(newMemo);
         return memoresponseDto;
     }
 
     @GetMapping
     public List<MemoResponseDto> getMemos() {
-        //DB 조회
+        // DB 조회
         String sql = "SELECT * FROM memo";
 
         List<MemoResponseDto> memoResponseDtoList = jdbcTemplate.query(sql, new RowMapper<MemoResponseDto>() {
@@ -66,38 +63,36 @@ public class MemoController {
         });
         return memoResponseDtoList;
     }
+
+    @PutMapping("/{id}")
+    public Long updateMemo(@PathVariable Long id, @RequestBody MemoRequestDto memoRequestDto) {
+        // 해당 id의 메모가 존재하는지 확인
+        Memo foundMemo = findById(id);
+
+        //메모 내용 삭제
+        if (foundMemo != null) {
+            String sql = "UPDATE memo SET username = ?, contents = ? WHERE id = ?";
+            jdbcTemplate.update(sql, memoRequestDto.getUsername(), memoRequestDto.getContents(), id);
+            return id;
+        } else {
+            throw new IllegalArgumentException("선택한 id의 메모는 존재하지 않습니다.");
+        }
+    }
+
+    // 공용 메서드
+    private Memo findById(Long id) {
+        String sql = "SELECT * FROM memo WHERE id = ?";
+
+        return jdbcTemplate.query(sql, rs -> {
+            if (rs.next()) {
+                Memo memo = new Memo();
+                // Memo에 setId가 없으면 아래 1줄은 지워도 됨
+                memo.setId(rs.getLong("id"));
+                memo.setUsername(rs.getString("username"));
+                memo.setContents(rs.getString("contents"));
+                return memo;
+            }
+            return null;
+        }, id);
+    }
 }
-//        @GetMapping
-//        public List<MemoResponseDto> getMemos() {
-//            //(임시) Map -> List
-//            List<MemoResponseDto> memoResponseDtos = memoList.values().stream()
-//                    .map(MemoResponseDto::new).toList();
-//            return memoResponseDtos;
-//        }
-//        @PutMapping("/{id}")
-//        public Long updateMemo(@PathVariable Long id, @RequestBody MemoRequestDto memoRequestDto) {
-//            //해당 id의 메모가 데이터베이스에 존재하는지 확인
-//            if (memoList.containsKey(id)) {
-//                //true면, 해당 메모 가져오기
-//                Memo foundMemo = memoList.get(id);
-//                foundMemo.update(memoRequestDto);
-//
-//                return foundMemo.getId();
-//            } else {
-//                throw new IllegalArgumentException("선택한 id의 메모는 존재하지 않습니다.");
-//            }
-//
-//        }
-//    @DeleteMapping("/{id}")
-//    public Long deleteMemo(@PathVariable Long id) {
-//        //해당 id의 메모가 데이터베이스에 존재하는지 확인
-//        if (memoList.containsKey(id)) {
-//            //true면, 해당 메모 가져오기
-//            memoList.remove(id);
-//            return id;
-//        } else {
-//            throw new IllegalArgumentException("선택한 id의 메모는 존재하지 않습니다.");
-//        }
-//    }
-//
-//}
