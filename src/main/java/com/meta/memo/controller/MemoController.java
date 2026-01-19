@@ -14,8 +14,9 @@ public class MemoController {
     // 멤버 변수 선언
     private final MemoService memoService;
 
-    public MemoController(JdbcTemplate jdbcTemplate) {
-        this.memoService = new MemoService(jdbcTemplate);
+    //생성자 주입(DI)
+    public MemoController(MemoService memoService) {
+        this.memoService = memoService;
     }
 
     @PostMapping()
@@ -28,12 +29,12 @@ public class MemoController {
         return memoService.getMemos();
     }
 
-    @PutMapping("{id}")
+    @PutMapping("/{id}")
     public Long updateMemo(@PathVariable Long id, @RequestBody MemoRequestDto memoRequestDto) {
         return memoService.updateMemo(id, memoRequestDto);
     }
 
-    @DeleteMapping("{id}")
+    @DeleteMapping("/{id}")
     public Long deleteMemo(@PathVariable Long id) {
         return memoService.deleteMemo(id);
     }
