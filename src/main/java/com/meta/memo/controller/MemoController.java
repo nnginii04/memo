@@ -18,6 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("api/memos")
 public class MemoController {
+
     // JDBC를 통한 MySQL 데이터베이스 연결
     private final JdbcTemplate jdbcTemplate;
 
@@ -25,13 +26,12 @@ public class MemoController {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    // CREATE
     @PostMapping
     public MemoResponseDto createMemo(@RequestBody MemoRequestDto memoRequestDto) {
-        // RequestDto -> Entity 변환
         Memo newMemo = new Memo(memoRequestDto);
 
-        // DB 저장
-        KeyHolder keyHolder = new GeneratedKeyHolder(); // 기본 키를 반환 받기 위한 객체
+        KeyHolder keyHolder = new GeneratedKeyHolder();
 
         String sql = "INSERT INTO memo(username, contents) VALUES (?, ?)";
         jdbcTemplate.update(con -> {
@@ -42,17 +42,15 @@ public class MemoController {
             return preparedStatement;
         }, keyHolder);
 
-        // Entity -> ResponseDto 변환
-        MemoResponseDto memoresponseDto = new MemoResponseDto(newMemo);
-        return memoresponseDto;
+        return new MemoResponseDto(newMemo);
     }
 
+    // READ (전체 조회)
     @GetMapping
     public List<MemoResponseDto> getMemos() {
-        // DB 조회
         String sql = "SELECT * FROM memo";
 
-        List<MemoResponseDto> memoResponseDtoList = jdbcTemplate.query(sql, new RowMapper<MemoResponseDto>() {
+        return jdbcTemplate.query(sql, new RowMapper<MemoResponseDto>() {
             @Override
             public MemoResponseDto mapRow(ResultSet rs, int rowNum) throws SQLException {
                 Long id = rs.getLong("id");
@@ -61,22 +59,44 @@ public class MemoController {
                 return new MemoResponseDto(id, username, contents);
             }
         });
-        return memoResponseDtoList;
     }
 
+    // UPDATE
     @PutMapping("/{id}")
-    public Long updateMemo(@PathVariable Long id, @RequestBody MemoRequestDto memoRequestDto) {
-        // 해당 id의 메모가 존재하는지 확인
+    public Long updateMemo(@PathVariable Long id,
+                           @RequestBody MemoRequestDto memoRequestDto) {
+
         Memo foundMemo = findById(id);
 
-        //메모 내용 삭제
-        if (foundMemo != null) {
-            String sql = "UPDATE memo SET username = ?, contents = ? WHERE id = ?";
-            jdbcTemplate.update(sql, memoRequestDto.getUsername(), memoRequestDto.getContents(), id);
-            return id;
-        } else {
+        if (foundMemo == null) {
             throw new IllegalArgumentException("선택한 id의 메모는 존재하지 않습니다.");
         }
+
+        String sql = "UPDATE memo SET username = ?, contents = ? WHERE id = ?";
+        jdbcTemplate.update(
+                sql,
+                memoRequestDto.getUserName(),
+                memoRequestDto.getContents(),
+                id
+        );
+
+        return id;
+    }
+
+    // DELETE
+    @DeleteMapping("/{id}")
+    public Long deleteMemo(@PathVariable Long id) {
+
+        Memo foundMemo = findById(id);
+
+        if (foundMemo == null) {
+            throw new IllegalArgumentException("선택한 id의 메모는 존재하지 않습니다.");
+        }
+
+        String sql = "DELETE FROM memo WHERE id = ?";
+        jdbcTemplate.update(sql, id);
+
+        return id;
     }
 
     // 공용 메서드
@@ -86,7 +106,6 @@ public class MemoController {
         return jdbcTemplate.query(sql, rs -> {
             if (rs.next()) {
                 Memo memo = new Memo();
-                // Memo에 setId가 없으면 아래 1줄은 지워도 됨
                 memo.setId(rs.getLong("id"));
                 memo.setUsername(rs.getString("username"));
                 memo.setContents(rs.getString("contents"));
