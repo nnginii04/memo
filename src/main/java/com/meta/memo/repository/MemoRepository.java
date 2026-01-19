@@ -57,7 +57,7 @@ public class MemoRepository {
     }
 
     // 특정 id의 메모 존재 여부 확인 공용 메서드
-    private Memo findById(Long id) {
+    public Memo findById(Long id) {
         // DB 조회
         String sql = "SELECT * FROM memo where id = ?";
 
@@ -76,11 +76,12 @@ public class MemoRepository {
     public Long update(Long id, MemoRequestDto memoRequestDto) {
         String sql = "UPDATE memo SET username = ?, contents = ? WHERE id = ?";
         jdbcTemplate.update( sql, memoRequestDto.getUsername(), memoRequestDto.getContents(), id);
-
         return id;
     }
 
-    public Long delete() {
-        return null;
+    public Long delete(Long id) {
+        String sql = "DELETE FROM memo WHERE id = ?";
+        jdbcTemplate.update( sql, id);
+        return id;
     }
 }
