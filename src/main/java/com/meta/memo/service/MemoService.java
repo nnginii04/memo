@@ -6,11 +6,14 @@ import com.meta.memo.dto.MemoResponseDto;
 import com.meta.memo.repository.MemoRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
-@Component
+@Service
+@Transactional(readOnly = true)
 public class MemoService {
     // 멤버 변수 선언
     private final MemoRepository memoRepository;
@@ -19,7 +22,7 @@ public class MemoService {
     public MemoService(MemoRepository memoRepository) {
         this.memoRepository = memoRepository;
     }
-
+    @Transactional
     public MemoResponseDto createMemo(@RequestBody MemoRequestDto memoRequestDto) {
         // RequestDto -> Entity 변환
         Memo newMemo = new Memo(memoRequestDto);
@@ -29,18 +32,18 @@ public class MemoService {
 
         return memoResponseDto;
     }
-
+    @Transactional(readOnly = true)
     public List<MemoResponseDto> getMemos() {
         List<MemoResponseDto> memoResponseDtoList = memoRepository.findAll().stream()
                 .map(MemoResponseDto::new).toList();
         return memoResponseDtoList;
     }
-
+    @Transactional(readOnly = true)
     public Memo getMemoById(Long id) {
         return memoRepository.findById(id).orElseThrow(()
                 -> new IllegalArgumentException("선택한 id의 메모는 존재하지 않습니다."));
     }
-
+    @Transactional
     public Long updateMemo(@PathVariable Long id, @RequestBody MemoRequestDto memoRequestDto) {
         // 해당 id의 메모가 존재하는지 확인
         Memo foundMemo = getMemoById(id);
@@ -48,7 +51,7 @@ public class MemoService {
         foundMemo.update(memoRequestDto);
         return id;
     }
-
+    @Transactional
     public Long deleteMemo(@PathVariable Long id) {
         // 해당 id의 메모가 존재하는지 확인
         Memo foundMemo = getMemoById(id);
