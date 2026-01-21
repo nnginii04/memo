@@ -29,6 +29,14 @@ public class MemoService {
         return new MemoResponseDto(savedMemo);
     }
 
+    @Transactional(readOnly = true)
+    public List<MemoResponseDto> getMemosByKeyword(String keyword) {
+        return memoRepository.findAllByContentsContainingOrderByModifiedAtDesc(keyword)
+                .stream()
+                .map(MemoResponseDto::new)
+                .toList();
+    }
+
     // 메모 전체 조회 (생성시간 최신순 정렬)
     public List<MemoResponseDto> getMemos() {
         return memoRepository.findAllByOrderByCreatedAtDesc().stream()
