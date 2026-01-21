@@ -1,27 +1,25 @@
 package com.meta.memo.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.meta.memo.domain.Memo;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.time.LocalDateTime;
+
 @Getter
+@AllArgsConstructor
 public class MemoResponseDto {
     private Long id;
-
-    @JsonProperty("username")
-    private String userName;
-
+    private String username;
     private String contents;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private LocalDateTime modifiedAt;
 
-    public MemoResponseDto(Memo memo) {
-        this.id = memo.getId();
-        this.userName = memo.getUsername();
-        this.contents = memo.getContents();
-    }
-
-    public MemoResponseDto(Long id, String username, String contents) {
-        this.id = id;
-        this.userName = username;
-        this.contents = contents;
+    public MemoResponseDto(Memo newMemo) {
+        this.id = newMemo.getId();
+        this.username = newMemo.getUsername();
+        this.contents = newMemo.getContents();
+        this.modifiedAt = newMemo.getModifiedAt();
     }
 }
