@@ -46,7 +46,8 @@ public class MemoService {
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = date.plusDays(1).atStartOfDay();
 
-        return memoRepository.findAllByCreatedAtBetweenOrderByCreatedAtDesc(start, end)
+        return memoRepository
+                .findAllByCreatedAtBetweenOrderByCreatedAtDesc(start, end)
                 .stream()
                 .map(MemoResponseDto::new)
                 .toList();

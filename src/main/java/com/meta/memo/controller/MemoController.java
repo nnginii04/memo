@@ -5,8 +5,8 @@ import com.meta.memo.dto.MemoResponseDto;
 import com.meta.memo.service.MemoService;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("api/memos")
@@ -42,4 +42,9 @@ public class MemoController {
     public Long deleteMemo(@PathVariable Long id) {
         return memoService.deleteMemo(id);
     }
+    @GetMapping("/date")
+    public List<MemoResponseDto> getMemosByDate(@RequestParam String date) {
+        return memoService.getMemosByDate(LocalDate.parse(date));
+    }
+
 }
