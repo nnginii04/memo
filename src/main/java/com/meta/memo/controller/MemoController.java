@@ -23,6 +23,10 @@ public class MemoController {
     public MemoResponseDto createMemo(@RequestBody MemoRequestDto memoRequestDto) {
         return memoService.createMemo(memoRequestDto);
     }
+    @GetMapping("/contents")
+    public List<MemoResponseDto> getMemosByKeyword(@RequestParam String keyword) {
+        return memoService.getMemosByKeyword(keyword);
+    }
 
     @GetMapping()
     public List<MemoResponseDto> getMemos() {
