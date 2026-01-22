@@ -204,6 +204,30 @@
         #cards-box {
             margin-top: 12px;
         }
+        .area-search {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .search-input {
+            flex: 1;
+            height: 38px;
+            border-radius: 5px;
+            border: none;
+            padding: 0 12px;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        .search-btn {
+            height: 38px;
+            border-radius: 5px;
+            border: none;
+            padding: 0 14px;
+            cursor: pointer;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
     </style>
     <script>
         // 사용자가 내용을 올바르게 입력하였는지 확인합니다.
@@ -233,7 +257,6 @@
         }
 
         // 수정 버튼을 눌렀을 때, 기존 작성 내용을 textarea 에 전달합니다.
-        // 숨길 버튼을 숨기고, 나타낼 버튼을 나타냅니다.
         function editPost(id) {
             showEdits(id);
             let contents = $(`#${id}-contents`).text().trim();
@@ -250,86 +273,124 @@
         }
 
         $(document).ready(function () {
-            // HTML 문서를 로드할 때마다 실행합니다.
+            // 최초 로딩 시 전체 조회
             getMessages();
-        })
 
-        // 메모를 불러와서 보여줍니다.
+            // 엔터로 검색
+            $('#keyword').on('keypress', function (e) {
+                if (e.which === 13) {
+                    searchMessages();
+                }
+            });
+        });
+
+        // 전체 메모 조회
         function getMessages() {
-            // 1. 기존 메모 내용을 지웁니다.
             $('#cards-box').empty();
-            // 2. 메모 목록을 불러와서 HTML로 붙입니다.
+
             $.ajax({
                 type: 'GET',
                 url: '/api/memos',
                 success: function (response) {
                     for (let i = 0; i < response.length; i++) {
                         let message = response[i];
-                        let id = message['id'];
-                        let username = message['username'];
-                        let contents = message['contents'];
-                        let modifiedAt = message['modifiedAt'];
-                        addHTML(id, username, contents, modifiedAt);
+                        addHTML(message.id, message.username, message.contents, message.modifiedAt);
                     }
+                },
+                error: function (xhr) {
+                    alert(`전체 조회 실패! status=${xhr.status}`);
+                    console.log(xhr.responseText);
                 }
-            })
+            });
+        }
+
+        // 검색 조회
+        function searchMessages() {
+            let keyword = $('#keyword').val(); // 문자열
+
+            // 빈 값이면 전체 조회
+            if (!keyword || keyword.trim() === '') {
+                getMessages();
+                return;
+            }
+
+            $('#cards-box').empty();
+
+            $.ajax({
+                type: 'GET',
+                url: `/api/memos/contents?keyword=${encodeURIComponent(keyword)}`,
+                success: function (response) {
+                    if (!response || response.length === 0) {
+                        $('#cards-box').append(`
+                        <div class="card">
+                            <div class="metadata">
+                                <div class="date">-</div>
+                                <div class="username">search</div>
+                            </div>
+                            <div class="contents" style="padding: 20px 23px;">
+                                "${keyword}" 검색 결과가 없습니다.
+                            </div>
+                            <div class="footer"></div>
+                        </div>
+                    `);
+                        return;
+                    }
+
+                    for (let i = 0; i < response.length; i++) {
+                        let message = response[i];
+                        addHTML(message.id, message.username, message.contents, message.modifiedAt);
+                    }
+                },
+                error: function (xhr) {
+                    alert(`검색 실패! status=${xhr.status}`);
+                    console.log(xhr.responseText);
+                }
+            });
         }
 
         // 메모 하나를 HTML로 만들어서 body 태그 내 원하는 곳에 붙입니다.
         function addHTML(id, username, contents, modifiedAt) {
-            // 1. HTML 태그를 만듭니다.
             let tempHtml = `<div class="card">
-                <!-- date/username 영역 -->
-                <div class="metadata">
-                    <div class="date">
-                        ${modifiedAt}
-                    </div>
-                    <div id="${id}-username" class="username">
-                        ${username}
-                    </div>
+            <div class="metadata">
+                <div class="date">
+                    ${modifiedAt}
                 </div>
-                <!-- contents 조회/수정 영역-->
-                <div class="contents">
-                    <div id="${id}-contents" class="text">
-                        ${contents}
-                    </div>
-                    <div id="${id}-editarea" class="edit">
-                        <textarea id="${id}-textarea" class="te-edit" name="" id="" cols="30" rows="5"></textarea>
-                    </div>
+                <div id="${id}-username" class="username">
+                    ${username}
                 </div>
-                <!-- 버튼 영역-->
-                <div class="footer">
-                    <img id="${id}-edit" class="icon-start-edit" src="images/edit.png" alt="" onclick="editPost('${id}')">
-                    <img id="${id}-delete" class="icon-delete" src="images/delete.png" alt="" onclick="deleteOne('${id}')">
-                    <img id="${id}-submit" class="icon-end-edit" src="images/done.png" alt="" onclick="submitEdit('${id}')">
+            </div>
+            <div class="contents">
+                <div id="${id}-contents" class="text">
+                    ${contents}
                 </div>
-            </div>`;
-            // 2. #cards-box 에 HTML을 붙인다.
+                <div id="${id}-editarea" class="edit">
+                    <textarea id="${id}-textarea" class="te-edit" cols="30" rows="5"></textarea>
+                </div>
+            </div>
+            <div class="footer">
+                <img id="${id}-edit" class="icon-start-edit" src="images/edit.png" alt="" onclick="editPost('${id}')">
+                <img id="${id}-delete" class="icon-delete" src="images/delete.png" alt="" onclick="deleteOne('${id}')">
+                <img id="${id}-submit" class="icon-end-edit" src="images/done.png" alt="" onclick="submitEdit('${id}')">
+            </div>
+        </div>`;
             $('#cards-box').append(tempHtml);
         }
 
         // 메모를 생성합니다.
         function writePost() {
-            // 1. 작성한 메모를 불러옵니다.
             let contents = $('#contents').val();
 
-            // 2. 작성한 메모가 올바른지 isValidContents 함수를 통해 확인합니다.
-            if (isValidContents(contents) == false) {
-                return;
-            }
-            // 3. genRandomName 함수를 통해 익명의 username을 만듭니다.
-            let username = genRandomName(10);
+            if (isValidContents(contents) == false) return;
 
-            // 4. 전달할 data JSON으로 만듭니다.
+            let username = genRandomName(10);
             let data = {'username': username, 'contents': contents};
 
-            // 5. POST /api/memos 에 data를 전달합니다.
             $.ajax({
                 type: "POST",
                 url: "/api/memos",
                 contentType: "application/json",
                 data: JSON.stringify(data),
-                success: function (response) {
+                success: function () {
                     alert('메시지가 성공적으로 작성되었습니다.');
                     window.location.reload();
                 }
@@ -338,25 +399,19 @@
 
         // 메모를 수정합니다.
         function submitEdit(id) {
-            // 1. 작성 대상 메모의 username과 contents 를 확인합니다.
             let username = $(`#${id}-username`).text().trim();
             let contents = $(`#${id}-textarea`).val().trim();
 
-            // 2. 작성한 메모가 올바른지 isValidContents 함수를 통해 확인합니다.
-            if (isValidContents(contents) == false) {
-                return;
-            }
+            if (isValidContents(contents) == false) return;
 
-            // 3. 전달할 data JSON으로 만듭니다.
             let data = {'username': username, 'contents': contents};
 
-            // 4. PUT /api/memos/{id} 에 data를 전달합니다.
             $.ajax({
                 type: "PUT",
                 url: `/api/memos/${id}`,
                 contentType: "application/json",
                 data: JSON.stringify(data),
-                success: function (response) {
+                success: function () {
                     alert('메시지 변경에 성공하였습니다.');
                     window.location.reload();
                 }
@@ -365,17 +420,17 @@
 
         // 메모를 삭제합니다.
         function deleteOne(id) {
-            // 1. DELETE /api/memos/{id} 에 요청해서 메모를 삭제합니다.
             $.ajax({
                 type: "DELETE",
                 url: `/api/memos/${id}`,
-                success: function (response) {
+                success: function () {
                     alert('메시지 삭제에 성공하였습니다.');
                     window.location.reload();
                 }
-            })
+            });
         }
     </script>
+
 </head>
 
 <body>
@@ -398,6 +453,15 @@
         <!--            <button class="btn btn-danger" onclick="writePost()">작성하기</button>-->
         <img src="images/send.png" alt="" onclick="writePost()">
     </div>
+
+    <!-- 검색 영역 -->
+    <div class="area-search">
+        <input id="keyword" class="search-input" type="text" placeholder="내용으로 검색 (예: 생성, time)" />
+        <button class="search-btn" onclick="searchMessages()">검색</button>
+        <button class="search-btn" onclick="getMessages()">전체</button>
+    </div>
+
+
     <div id="cards-box" class="area-read">
         <div class="card">
             <!-- date/username 영역 -->
