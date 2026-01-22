@@ -10,4 +10,6 @@ class MemoApplicationTests {
     void contextLoads() {
     }
 
+    public static class TransactionTest {
+    }
 }
