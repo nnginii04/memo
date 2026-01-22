@@ -7,7 +7,11 @@ import com.meta.memo.repository.MemoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import java.util.List;
+
 
 @Service
 @Transactional(readOnly = true)
@@ -36,6 +40,18 @@ public class MemoService {
                 .map(MemoResponseDto::new)
                 .toList();
     }
+
+    @Transactional(readOnly = true)
+    public List<MemoResponseDto> getMemosByDate(LocalDate date) {
+        LocalDateTime start = date.atStartOfDay();
+        LocalDateTime end = date.plusDays(1).atStartOfDay();
+
+        return memoRepository.findAllByCreatedAtBetweenOrderByCreatedAtDesc(start, end)
+                .stream()
+                .map(MemoResponseDto::new)
+                .toList();
+    }
+
 
     // 메모 전체 조회 (생성시간 최신순 정렬)
     public List<MemoResponseDto> getMemos() {
